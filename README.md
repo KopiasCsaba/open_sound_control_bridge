@@ -3,18 +3,13 @@
 
 
 <!-- TOC -->
-* [Video Backend](#video-backend)
-  * [Overview](#overview)
-* [Development](#development)
-  * [Requirements](#requirements)
-  * [Building](#building)
-  * [Starting the development environment](#starting-the-development-environment)
-    * [make dev_start](#make-devstart)
-  * [Understanding the codebase](#understanding-the-codebase)
-* [Using the app](#using-the-app)
-  * [Specifying secrets](#specifying-secrets)
-* [Production](#production)
-  * [Runtime requirements](#runtime-requirements)
+* [Open Sound Control Bridge](#open-sound-control-bridge)
+  * [Example uses](#example-uses)
+* [Install](#install)
+* [Configuration](#configuration)
+  * [Example configuration](#example-configuration)
+* [Sources](#sources)
+  * [Digital Mixing Consoles](#digital-mixing-consoles)
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -59,9 +54,18 @@ I think now you got the point!
 
 This section is under construction.
 
+# Overview
+
+From a birds eye view, oscbridge provides a central "message store", to which "osc sources" can publish messages.
+Every time a new message arrives, each action is checked, if their trigger_chain conditions are resolving to true based on the current store.
+If every the trigger chain resolves to true, then the action's tasks are executed.
+
+So this is the control flow:
+[OSC SOURCES] -> [OSC MESSAGE STORE] -> [ACTION TRIGGER CHAIN] -> [ACTION TASK]
+
 # Configuration
 ## Example configuration
-
+Below is the simplest example to showcase how the system works.
 <details>
 <summary>Click to see YAML</summary>
 
@@ -194,3 +198,126 @@ You can see the results on this gif:
 <a href="docs/assets/readme/example_config.mkv"><img src="docs/assets/readme/example_config.gif" width=300></a>
 
 OBS is switching scenes based on the mute status, and at the bottom you can see the arriving requests.
+
+You can just switch from the dummy to the console one, and your mute button is then tied to OBS scenes and the camera.
+
+# Sources
+## Digital Mixing Consoles
+Many digital mixing consoles support a protocol called "[Open Sound Control](https://en.wikipedia.org/wiki/Open_Sound_Control)",
+this is a UDP based simple protocol. It is based on "Messages", where each message has an address, and 0 or more arguments, and each argument can be a string, a float, an int, etc.
+
+I have tested on Behringer X32 (See pmalliot's excellent work [here](https://sites.google.com/site/patrickmaillot/x32) on OSC).
+
+In the case of X32, we need to regularly(8-10 sec) issue a /subscribe command with proper arguments, to show that we are 
+interested in updates of a certain value from the console. Then the mixer is flooding us with the requested parameter.
+
+So below is a real world example for behringer x32 OSC connection:
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+  console_bridges:
+    - name: "behringer_x32"             # The name of this mixer
+      enabled: true                     # If enabled, OSCBRIDGE will try to connect, and restart if fails.
+      prefix: ""                        # Prefix determines
+      host: 192.168.2.99
+      port: 10023
+      osc_implementation: l
+      init_command:
+        address: /xinfo
+      check_address: /ch/01/mix/on
+      check_pattern: "^0|1$"
+      subscriptions:
+        - osc_command:
+            address: /subscribe
+            arguments:
+              - type: string
+                value: /ch/01/mix/on
+              - type: int32
+                value: 10
+          repeat_millis: 8000
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+
+```
+
+</details>
