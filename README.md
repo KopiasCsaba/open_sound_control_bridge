@@ -6,6 +6,7 @@
 * [Open Sound Control Bridge](#open-sound-control-bridge)
   * [Example uses](#example-uses)
 * [Install](#install)
+* [Overview](#overview)
 * [Configuration](#configuration)
   * [Example configuration](#example-configuration)
 * [Sources](#sources)
@@ -201,12 +202,13 @@ OBS is switching scenes based on the mute status, and at the bottom you can see 
 
 You can just switch from the dummy to the console one, and your mute button is then tied to OBS scenes and the camera.
 
-# Sources
-## Digital Mixing Consoles
+## Sources
+### Digital Mixing Consoles
 Many digital mixing consoles support a protocol called "[Open Sound Control](https://en.wikipedia.org/wiki/Open_Sound_Control)",
 this is a UDP based simple protocol. It is based on "Messages", where each message has an address, and 0 or more arguments, and each argument can be a string, a float, an int, etc.
 
-I have tested on Behringer X32 (See pmalliot's excellent work [here](https://sites.google.com/site/patrickmaillot/x32) on OSC).
+I have tested on Behringer X32, so most examples are based on this console.
+See pmalliot's excellent work [here](https://sites.google.com/site/patrickmaillot/x32) on X32's [OSC](https://drive.google.com/file/d/1Snbwx3m6us6L1qeP1_pD6s8hbJpIpD0a/view) implementation.
 
 In the case of X32, we need to regularly(8-10 sec) issue a /subscribe command with proper arguments, to show that we are 
 interested in updates of a certain value from the console. Then the mixer is flooding us with the requested parameter.
@@ -217,19 +219,45 @@ So below is a real world example for behringer x32 OSC connection:
 <summary>Click to see YAML</summary>
 
 ```yaml
+osc_sources:
   console_bridges:
-    - name: "behringer_x32"             # The name of this mixer
-      enabled: true                     # If enabled, OSCBRIDGE will try to connect, and restart if fails.
-      prefix: ""                        # Prefix determines
+    # The name of this mixer
+    - name: "behringer_x32"
+      
+      # If enabled, OSCBRIDGE will try to connect, and restart if fails.
+      enabled: true
+      
+      # Prefix determines the message address prefix as it will be stored to the store.
+      # E.g. if you'd have multiple consoles, you could prefix them "/console1", "/console2",
+      # and you could match for /console1/ch/01/mix/on for example.
+      prefix: ""                        
+      
       host: 192.168.2.99
       port: 10023
+      
+      # The driver to use. We only have "l" for now.
       osc_implementation: l
+      
+      # This command is sent right after the connection is opened.
+      # It can be used for authentication, or anything that is required.
+      # X32 does not require anything, but for this it returns it's own name.
       init_command:
         address: /xinfo
+        # You could specify arguments also.
+        # arguments:
+        #   - type: string
+        #     value: "foobar"
+      
+      # There is a regular query running, for checking if the connection is still alive.
+      # Specify an address here, and a regexp that matches the returned value.
+      # If there is no response, or the response doesn't match, the connection is counted as broken and the app restarts.
       check_address: /ch/01/mix/on
       check_pattern: "^0|1$"
+      # Subscriptions are commands that are sent regularly (repeat_millis) that cause the mixer to update us with the lates values for the subscribed thing.
+      # Research your own mixer for the exact syntax, but this is how you do it for X32.
       subscriptions:
         - osc_command:
+            # This command subscribes for channel 1's mute status. 0 is muted, 1 is unmuted.
             address: /subscribe
             arguments:
               - type: string
@@ -238,17 +266,61 @@ So below is a real world example for behringer x32 OSC connection:
                 value: 10
           repeat_millis: 8000
 ```
-
 </details>
+
+### Dummy console
+
+The dummy console implementation is just what it's name implies.
+It has `message_groups`, and each `message_group` contains `messages`.
+The dummy console iterates infinitely through the groups, and executes the messages in them.
+Between each group it waits the configured ammount of time.
+
+The below example configures two groups, called "mic_1_on" and "mic_1_off".
+
+Therefore, it provides a way to test the logic even without a real connection to a mixer.
+You can have a dummy emitting the same messages the real console would, and you can freely enable/disable any source,
+so you can test, or you can switch to the real operation mode by enabling the console connection.
 
 <details>
 <summary>Click to see YAML</summary>
 
+
 ```yaml
+osc_sources:
+  dummy_connections:
+    - name: "behringer_x32_dummy"
+      # Use this source, or not.
+      enabled: true
+
+      # Prefix determines the message address prefix as it will be stored to the store.
+      prefix: ""
+      
+      # How much delay should be between each group?
+      iteration_speed_secs: 1
+      
+      # Message groups are set of messages being emitted at once.
+      message_groups:
+        - name: mic_1_on
+          osc_commands:
+            - address: /ch/01/mix/on
+              comment: "headset mute (0: muted, 1: unmuted)"
+              arguments:
+                - type: int32
+                  value: 1
+                
+        - name: mic_1_off
+          osc_commands:
+            - address: /ch/01/mix/on
+              comment: "headset mute (0: muted, 1: unmuted)"
+              arguments:
+                - type: int32
+                  value: 0
 
 ```
 
 </details>
+
+
 
 <details>
 <summary>Click to see YAML</summary>
