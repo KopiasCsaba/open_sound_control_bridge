@@ -86,7 +86,7 @@ func (c *HTTPBridge) getRoot(w http.ResponseWriter, r *http.Request) {
 	// Get the value of the 'address' parameter
 	address := queryParams.Get("address")
 
-	if address == "" || strings.HasPrefix(address, "/") {
+	if address == "" {
 		err := fmt.Errorf("invalid address: '%s'", address)
 		c.badRequest(r.Context(), w, err)
 		return

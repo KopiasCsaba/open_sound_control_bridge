@@ -18,15 +18,13 @@
 
 OSCBridge is a tool to help automate operations with audio/streaming gear.
 
-If you want to automate things* based on:
+Input could come from various sources, such as:
  * Digital Audio Mixer Console state (such as Behringer X32 or other that supports OSC)
  * OBS Studio state
  * A HTTP Request
  * Time
 
-What are those things?
-
-OSCBridge is easily extendable, but currently it supports the following "tasks":
+OSCBridge currently supports the following "tasks":
  * HTTP Request
  * Delay (just wait)
  * OBS Change preview scene
@@ -321,31 +319,143 @@ osc_sources:
 
 </details>
 
+### OBS BRIDGES
 
+OSCBridge can be configured to connect to an OBS Studio instance via websocket, and it will subscribe to some events in OBS.
+
+These events are the following:
+ * CurrentPreviewSceneChanged
+   * Message:
+     * Address: /obs/preview_scene
+     * Argument[0]: string, value: NAME_OF_SCENE
+ * CurrentProgramSceneChanged
+   * Message:
+     * Address: /obs/program_scene
+     * Argument[0]: string, value: NAME_OF_SCENE
+ * RecordStateChanged
+   * Message:
+     * Address: /obs/recording
+     * Argument[0]: int32, value: 0 or 1
+ * StreamStateChanged
+   * Message:
+     * Address: /obs/streaming
+     * Argument[0]: int32, value: 0 or 1
+
+In order to configure an OBS Bridge, you'll also need to configure an OBS Connection.
 
 <details>
 <summary>Click to see YAML</summary>
 
 ```yaml
+
+obs_connections:
+  - name: "streampc_obs"
+    host: 192.168.1.75
+    port: 4455
+    password: "foobar12345"
+
+osc_sources:
+  obs_bridges:
+    - name: "obsbridge1"
+      # You may choose to disable it.
+      enabled: true
+
+      # Prefix determines the message address prefix as it will be stored to the store.
+      prefix: ""
+
+      # The name of the obs connection, see above.
+      connection: "streampc_obs"
 
 ```
 
 </details>
 
+### HTTP BRIDGES
+
+HTTP Bridges in OSCBridge enables you to open a port on a network interface and start a HTTP server on them.
+The server can receive special HTTP GET requests, and converts them to OSC messages and stores them in the message store.
+Then you can write actions that check for that value, and may even execute tasks based on it.
+
+The message can be put away under some namespace by using the prefix option, but you could also use it to override an existing message.
+
+To insert an OSC Message like this:
+```
+Message(address: /foo/bar/baz, arguments: [Argument(string:hello), Argument(int32:1)])
+```
+
+Execute a GET request like this:
+```bash
+curl "127.0.0.1:7878/?address=/foo/bar/baz&args[]=string,hello&args[]=int32,1"
+```
+
+
 <details>
 <summary>Click to see YAML</summary>
 
 ```yaml
-
+osc_sources:
+    http_bridges:
+      - name: "httpbridge1"
+        # You may choose to disable it.
+        enabled: true
+        # Prefix determines the message address prefix as it will be stored to the store.
+        prefix: ""
+        port: 7878
+        host: 0.0.0.0
 ```
 
 </details>
 
+### Tickers
+
+You can enable "Tickers", that would regularly update the store with messages representing the current date/time.
+
+The ticker publishes several packages under "/time/" (if you don't specify a prefix), with names that might be weird for the first time,
+if you are not familiar with how golang's time formatting works.
+
+You may see the full reference [here](https://cs.opensource.google/go/go/+/refs/tags/go1.21.3:src/time/format.go;l=9):
+
+Currently these messages are being emitted in every iteration:
+
+* /time/2006
+* /time/06
+* /time/Jan
+* /time/January
+* /time/01
+* /time/1
+* /time/Mon
+* /time/Monday
+* /time/2
+* /time/_2
+* /time/02
+* /time/__2
+* /time/002
+* /time/15
+* /time/3
+* /time/03
+* /time/4
+* /time/04
+* /time/5
+* /time/05
+* /time/PM
+
+So if you want to match for hour:minute, then you want to match the values of /time/15 and /time/04 respectively in the trigger chain (to be explained later).
+
 <details>
 <summary>Click to see YAML</summary>
 
 ```yaml
-
+osc_sources:
+  tickers:
+    - name: "ticker1"
+      # You may choose to disable it.
+      enabled: true
+      
+      # Prefix determines the message address prefix as it will be stored to the store.
+      prefix: ""
+      
+      # How often updates should occur
+      refresh_rate_millis: 1000
 ```
 
 </details>
