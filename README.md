@@ -1,9 +1,6 @@
 <h1>Table of contents</h1>
 
-<hr>
 
-
-# Video Backend
 
 <!-- TOC -->
 * [Video Backend](#video-backend)
@@ -18,71 +15,163 @@
   * [Specifying secrets](#specifying-secrets)
 * [Production](#production)
   * [Runtime requirements](#runtime-requirements)
-* [./app --help](#app---help)
 <!-- TOC -->
 
-## Overview
+# Open Sound Control Bridge
 
-@TODO add stuff here.
+OSCBridge is a tool to help automate operations with audio/streaming gear.
 
-# Development
+If you want to automate things* based on:
+ * Digital Audio Mixer Console state (such as Behringer X32 or other that supports OSC)
+ * OBS Studio state
+ * A HTTP Request
+ * Time
 
-## Requirements
+What are those things?
 
-* [docker](https://docs.docker.com/engine/install/)
-    * buildx (included in official docker builds,e.g. the docker-buildx-plugin package)
-    * compose (included in official docker builds,e.g. the docker-compose-plugin package)
-* git
-* make
-* jq
-* curl
-* gzip
+OSCBridge is easily extendable, but currently it supports the following "tasks":
+ * HTTP Request
+ * Delay (just wait)
+ * OBS Change preview scene
+ * OBS Change program scene
+ * OBS Send "vendor" message to any plugin that cares, e.g. to the amazingly excellent [Advanced Scene Switcher](https://github.com/WarmUpTill/SceneSwitcher).
+ * Excecute a command
+ * Send an OSC message
 
-WARNING:
+## Example uses
+Here is just a few idea:
+ * When a microphone is unmuted, turn the PTZ camera to the speaker.
+ * When the stage is unmuted, turn the PTZ camera to the stage.
+ * When a special HTTP request arrives, mute/unmute something.
+ * When a special HTTP request arrives, set the volume of a channel to the specified value.
+ * At a specified time, unmute a microphone.
+ * At a specified time, switch to an OBS Scene.
+ * At a specified time, send an HTTP Request.
+ * When something is unmuted, switch to a scene in OBS.
+ * When a scene is activated in OBS unmute certain channels.
+ * When a microphone is unmuted, then turn the camera but only if a ceratin OBS scene is active.
+ * When ... send a command to Advanced Scene Switcher, to do a [zillion other things](https://github.com/WarmUpTill/SceneSwitcher/wiki)
+ * When ... then make Advanced Scene Switcher do an http request to execute some other actions through the oscbridge. (Btw A.S.S. can send OSC messages too.)
 
-* In case of ubuntu or other linux distros, don't use the distro supported version of docker.
+I think now you got the point!
 
-## Building
+# Install
 
-* To build the application, use the "make build" command. The results will be in the "[build](./build)" folder.
-* To debug the build process, start two shells:
-    1. make build_interactive
-    2. make build_shell
+This section is under construction.
 
-## Starting the development environment
+# Configuration
+## Example configuration
 
-### make dev_start
+<details>
+<summary>Click to see YAML</summary>
 
-This is the most important command. This starts the application in a development container.
-The app is killed and restarted upon any filechange, therefore iterating on code is very effective.
+```yaml
+obs_connections:
+  - name: "streaming_pc_obs"
+    host: 192.168.1.75
+    port: 4455
+    password: "foobar"
 
-In case if it is needed, "make dev_shell" can be used to access the container in a shell.
+osc_sources:
+  console_bridges:
+    - name: "behringer_x32"
+      enabled: false
+      prefix: ""
+      host: 192.168.2.99
+      port: 10023
+      osc_implementation: l
+      init_command:
+        address: /xinfo
+      check_address: /ch/01/mix/on
+      check_pattern: "^0|1$"
+      subscriptions:
+        - osc_command:
+            address: /subscribe
+            arguments:
+              - type: string
+                value: /ch/01/mix/on
+              - type: int32
+                value: 10
+          repeat_millis: 8000
 
-## Understanding the codebase
+  dummy_connections:
+    - name: "behringer_x32_dummy"
+      enabled: true
+      prefix: ""
+      iteration_speed_secs: 1
+      message_groups:
+        - name: mic_1_on
+          osc_commands:
+            - address: /ch/01/mix/on
+              comment: "headset mute (0: muted, 1: unmuted)"
+              arguments:
+                - type: int32
+                  value: 1
+        - name: mic_1_off
+          osc_commands:
+            - address: /ch/01/mix/on
+              comment: "headset mute (0: muted, 1: unmuted)"
+              arguments:
+                - type: int32
+                  value: 0
 
-Learn more about the basics of this codebase [docs/development/index.md](docs/development/index.md)
+actions:
+  to_pulpit:
+    trigger_chain:
+      type: osc_match
+      parameters:
+        address: /ch/01/mix/on
+        arguments:
+          - index: 0
+            type: "int32"
+            value: "1"
+    tasks:
+      - type: http_request
+        parameters:
+          url: "http://127.0.0.1:8888/cgi-bin/ptzctrl.cgi?ptzcmd&poscall&0&__TURN_TO_PULPIT"
+          method: "get"
+          timeout_secs: 1
+      - type: obs_scene_change
+        parameters:
+          scene: "PULPIT"
+          scene_match_type: regexp
+          target: "program"
+          connection: "streaming_pc_obs"
+      - type: obs_scene_change
+        parameters:
+          scene: "STAGE"
+          scene_match_type: regexp
+          target: "preview"
+          connection: "streaming_pc_obs"
 
-# Using the app
+  to_stage:
+    trigger_chain:
+      type: osc_match
+      parameters:
+        address: /ch/01/mix/on
+        arguments:
+          - index: 0
+            type: "int32"
+            value: "0"
+    tasks:
+      - type: http_request
+        parameters:
+          url: "http://127.0.0.1:8888/cgi-bin/ptzctrl.cgi?ptzcmd&poscall&1&__TURN_TO_STAGE"
+          method: "get"
+          timeout_secs: 1
+      - type: obs_scene_change
+        parameters:
+          scene: "STAGE"
+          scene_match_type: regexp
+          target: "program"
+          connection: "streaming_pc_obs"
+      - type: obs_scene_change
+        parameters:
+          scene: "PULPIT"
+          scene_match_type: regexp
+          target: "preview"
+          connection: "streaming_pc_obs"
+```
 
-@TODO `./app --help`.
 
-TL; DR: The application reads env variables, all of them are starting with a "APP_" prefix.
-Also, environment variables can be stored in a plaintext file, one per line in the format: KEY=VALUE.
-
-In this case the KEY must not start with APP_. Supply this file(s) to the app with the "--envfile" argument(s).
-[Here](docker/devenv/devenv.env) is an example env file.
-
-## Specifying secrets
-
-There is an example secret file at [secrets.env.example](docker/devenv/secrets.env.example).
-
-To use sections that require secrets, rename it to "secrets.env" and change the values to their respective value.
-The dev environment automatically merges "secrets.env" onto the [devenv.env](docker/devenv/devenv.env)
-
-# Production
-
-To get an example for a production container configuration of the docker image, see "app-prod-runner" in
-the [docker-compose.yml](docker/docker-compose.yml)!
-
-## Runtime requirements
-
+</details>
