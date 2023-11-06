@@ -173,5 +173,23 @@ actions:
           connection: "streaming_pc_obs"
 ```
 
-
 </details>
+
+In this configuration there are two OSC sources:
+* Dummy (enabled)
+* A Behringer X32 digital console (disabled)
+
+The dummy source acts as if someone would press Ch1's mute button every second to toggle it.
+
+Then there are two actions defined, "to_pulpit" and "to_stage".
+Each has a single trigger, that matches /ch/01/mix/on to be 0 or 1.
+
+Then for each action, there are three tasks:
+* An HTTP request that would recall a PTZ Optics camera preset (0 and 1 respectively).
+* An obs_scene_change to change the program scene.
+* An obs_scene_change to change the preview scene.
+
+You can see the results on this gif:
+[![](docs/assets/readme/example_config.gif)](docs/assets/readme/example_config.mkv)
+
+OBS is switching scenes based on the mute status, and at the bottom you can see the arriving requests.
