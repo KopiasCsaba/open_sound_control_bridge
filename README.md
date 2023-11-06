@@ -9,8 +9,9 @@
 * [Overview](#overview)
 * [Configuration](#configuration)
   * [Example configuration](#example-configuration)
-* [Sources](#sources)
-  * [Digital Mixing Consoles](#digital-mixing-consoles)
+  * [Sources](#sources)
+    * [Digital Mixing Consoles](#digital-mixing-consoles)
+    * [Dummy console](#dummy-console)
 <!-- TOC -->
 
 # Open Sound Control Bridge
