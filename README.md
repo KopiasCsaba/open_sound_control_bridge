@@ -190,6 +190,7 @@ Then for each action, there are three tasks:
 * An obs_scene_change to change the preview scene.
 
 You can see the results on this gif:
-[![](docs/assets/readme/example_config.gif)](docs/assets/readme/example_config.mkv)
+
+<a href="docs/assets/readme/example_config.mkv"><img src="docs/assets/readme/example_config.gif" width=300></a>
 
 OBS is switching scenes based on the mute status, and at the bottom you can see the arriving requests.
