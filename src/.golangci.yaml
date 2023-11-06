@@ -1,0 +1,128 @@
+run:
+  timeout: 5m
+
+# Default: https://golangci-lint.run/usage/false-positives/#default-exclusions
+issues:
+  exclude-rules:
+    - path: cmd/.*/.*\.go
+      text: (Revision|BuildTime) is a global variable
+      # Reason: this is how we got the build time and revision injected at build time. Must be global.
+      linters:
+        - gochecknoglobals
+
+    - path: adapters/config/for_usecases.go
+      text: "G101: Potential hardcoded credentials"
+      # Reason: false positive, no idea why it thinks that for that const. (configKeyDebugKeepWorkDirs)
+      linters:
+        - gosec
+
+    - path: pkg/cliexecutor/executor.go
+      text: "G204: Subprocess launched with a potential tainted input or cmd arguments"
+      # Reason: the input value is checked.
+      linters:
+        - gosec
+
+    - path: .*\.go
+      text: "S1011: should replace loop with"
+      # Reason: Using the ... can introduce performance issues with large arrays.
+      linters:
+        - gosimple
+
+    - path: .*\.go
+      text: "error returned from external package is unwrapped"
+      linters:
+        - wrapcheck
+
+    - path: .*\.go
+      text: "should be written without leading space as|parameter 'ctx' seems to be unused, consider removing or renaming|var-naming: don't use an underscore in package name|should not use underscores in package names|`ctx` is unused"
+
+    - path: .*\.go
+      text: "error returned from interface method should be wrapped.*IRepoTransaction"
+
+    - path: .*\.go
+      text: "unused-parameter: parameter"
+
+    - path: cmd/test.*/.*\.go
+      text: ".*"
+
+linters:
+  disable-all: true
+  enable:
+    - bodyclose
+    - dogsled
+    - dupl
+    - durationcheck
+    - exhaustive
+    - exportloopref
+    - gofmt
+    - gomoddirectives
+    - goprintffuncname
+    - govet
+    - importas
+    - ineffassign
+    - makezero
+    - misspell
+    - nakedret
+    - nilerr
+    - noctx
+    - nolintlint
+    - prealloc
+    - predeclared
+    - revive
+    - rowserrcheck
+    - sqlclosecheck
+    - staticcheck
+    - stylecheck
+    - tparallel
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - wastedassign
+    - cyclop
+    - errcheck
+    - errorlint
+    - forbidigo
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - goconst
+    - gocyclo
+    - gosimple
+    - paralleltest
+    - thelper
+    - goheader
+    - gomodguard
+    - forcetypeassert
+    - gocritic
+    - gosec
+    - wrapcheck
+    - whitespace
+
+    # MAYBE ONCE UPON A TIME
+    #- lll
+    #- nlreturn
+    #- gci
+    #- gofumpt
+    #- goimports
+
+    # DON'T ENABLE:
+    #- godot
+    #- exhaustivestruct
+    #- asciicheck
+    #- funlen
+    #- godox
+    #- goerr113
+    #- gomnd
+    #- interfacer
+    #- maligned
+    #- nestif
+    #- testpackage
+    #- wsl
+
+    # DEPRECATED
+    #- ifshort
+    #- structcheck
+    #- deadcode
+    #- varcheck
+    #- scopelint

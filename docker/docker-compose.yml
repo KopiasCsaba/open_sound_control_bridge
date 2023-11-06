@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+
+  # This is the development container
+  app-dev:
+    hostname: app-dev
+    container_name: app-dev
+    image: app-dev
+    platform: linux/amd64
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: development
+      args:
+        - "UID=${UID:-1000}"
+        - "GID=${GID:-1000}"
+    volumes:
+      - type: bind
+        source: ..
+        target: /mnt
+      - type: bind
+        source: /tmp/app-tmp
+        target: /tmp/app-tmp
+      - type: volume
+        source: go-modules-cache
+        target: /home/container/go/pkg/mod
+    ports:
+      - "7878:7878"
+#      - "4455:4455"
+#      - "10023:10023/udp"
+    network_mode: host
+    environment:
+      - APP_ENVFILES=/mnt/docker/devenv/devenv.env:/mnt/docker/devenv/secrets.env
+      - APP_TMP=/tmp/app-tmp
+    stop_grace_period: 10s # After CTRL-C
+
+volumes:
+  go-modules-cache:
+  pgdata:

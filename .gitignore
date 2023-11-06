@@ -1,0 +1,6 @@
+.idea
+*fuse_hidden*
+docker/devenv/secrets.env
+testscripts/testfiles/*
+src/config.yml
+build/*
