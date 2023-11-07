@@ -925,6 +925,27 @@ Parameters:
 
 ### Delay
 
+The `delay` simply delays the serial execution of the tasks, taking up as much time as you configure.
+
+Parameters:
+
+| Parameter    | Default value  | Description                    | Example values          |
+|--------------|----------------|--------------------------------|-------------------------|
+| delay_millis | none, required | How much milliseconds to wait. | `1500` (for 1.5 second) |
+
+Example:
+
+```yaml
+actions:
+  to_pulpit:
+    trigger_chain:
+    # ...
+    tasks:
+      - type: delay
+        parameters:
+          delay_millis: 1500
+```
+
 ### Run command
 
 ### Send OSC message
