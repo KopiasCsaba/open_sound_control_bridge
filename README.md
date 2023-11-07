@@ -2,34 +2,36 @@
 
 
 <!-- TOC -->
+
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-  * [Example uses](#example-uses)
+    * [Example uses](#example-uses)
 * [Install](#install)
 * [Overview](#overview)
 * [Configuration](#configuration)
-  * [Example configuration](#example-configuration)
-  * [Actions](#actions)
-    * [Debouncing](#debouncing)
-  * [Trigger chain](#trigger-chain)
-    * [Conditions](#conditions)
-      * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
-        * [Trigger on change](#trigger-on-change)
-      * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
-      * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
-      * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
-  * [Sources](#sources)
-    * [Digital Mixing Consoles](#digital-mixing-consoles)
-    * [Dummy console](#dummy-console)
-    * [OBS bridges](#obs-bridges)
-    * [HTTP bridges](#http-bridges)
-    * [Tickers](#tickers)
-  * [Tasks](#tasks)
-    * [HTTP request](#http-request)
-    * [OBS Scene change](#obs-scene-change)
-    * [OBS Vendor message](#obs-vendor-message)
-    * [Delay](#delay)
-    * [Run command](#run-command)
-    * [Send OSC message](#send-osc-message)
+    * [Example configuration](#example-configuration)
+    * [Actions](#actions)
+        * [Debouncing](#debouncing)
+    * [Trigger chain](#trigger-chain)
+        * [Conditions](#conditions)
+            * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
+                * [Trigger on change](#trigger-on-change)
+            * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
+            * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
+            * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
+    * [Sources](#sources)
+        * [Digital Mixing Consoles](#digital-mixing-consoles)
+        * [Dummy console](#dummy-console)
+        * [OBS bridges](#obs-bridges)
+        * [HTTP bridges](#http-bridges)
+        * [Tickers](#tickers)
+    * [Tasks](#tasks)
+        * [HTTP request](#http-request)
+        * [OBS Scene change](#obs-scene-change)
+        * [OBS Vendor message](#obs-vendor-message)
+        * [Delay](#delay)
+        * [Run command](#run-command)
+        * [Send OSC message](#send-osc-message)
+
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -857,8 +859,8 @@ obs_connections:
     host: 192.168.1.75
     port: 4455
     password: "foobar12345"
-    
-    
+
+
 actions:
   to_pulpit:
     trigger_chain:
@@ -870,7 +872,7 @@ actions:
           scene_match_type: regexp
           target: "program"
           connection: "streaming_pc_obs"
-          
+
       - type: obs_scene_change
         parameters:
           scene: "STAGE"
@@ -880,8 +882,51 @@ actions:
 ```
 
 ### OBS Vendor message
+
+It is possible to send
+a [VendorEvent](https://github.com/obsproject/obs-websocket/blob/master/docs/generated/protocol.md#vendorevent) to OBS
+via a websocket connection.
+Different plugins can listen for these events, one example is the
+marvelous [Advanced Scene Switcher](https://github.com/WarmUpTill/SceneSwitcher/),
+which [supports](https://github.com/WarmUpTill/SceneSwitcher/wiki/Websockets#websocket-condition) this.
+
+So given that you are listening in that plugin for "IF Websocket Message waas received: foobar_notice",
+you can execute macros remotely with OSCBridge:
+
+```yaml
+obs_connections:
+  - name: "streampc_obs"
+    host: 192.168.1.75
+    port: 4455
+    password: "foobar12345"
+
+actions:
+  to_pulpit:
+    trigger_chain:
+    # ...
+    tasks:
+      - type: obs_vendor_request
+        parameters:
+          connection: "streampc_obs"
+          vendorName: "AdvancedSceneSwitcher"
+          requestType: "AdvancedSceneSwitcherMessage"
+          requestData:
+            message: "foobar_notice"
+```
+
+Parameters:
+
+| Parameter   | Default value  | Description                                               | Example values                 |
+|-------------|----------------|-----------------------------------------------------------|--------------------------------|
+| connection  | none, required | The name of the obs connection that this task should use. | `streampc_obs`                 |
+| vendorName  | none, required |                                                           | `AdvancedSceneSwitcher`        |
+| requestType | none, required |                                                           | `AdvancedSceneSwitcherMessage` |
+| requestData | none, required |                                                           | `message: whatever`            |
+
 ### Delay
+
 ### Run command
+
 ### Send OSC message
 
 
