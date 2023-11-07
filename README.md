@@ -34,6 +34,10 @@
 
 <!-- TOC -->
 
+# Under construction
+I have just released this tool, and I still need to add a lot of documentation.
+Please bear with me during that!
+
 # Open Sound Control Bridge
 
 OSCBridge is a tool to help automate operations with audio/streaming gear.
