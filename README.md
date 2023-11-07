@@ -2,20 +2,27 @@
 
 
 <!-- TOC -->
-
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-    * [Example uses](#example-uses)
+  * [Example uses](#example-uses)
 * [Install](#install)
 * [Overview](#overview)
 * [Configuration](#configuration)
-    * [Example configuration](#example-configuration)
-    * [Sources](#sources)
-        * [Digital Mixing Consoles](#digital-mixing-consoles)
-        * [Dummy console](#dummy-console)
-        * [OBS bridges](#obs-bridges)
-        * [HTTP bridges](#http-bridges)
-        * [Tickers](#tickers)
-
+  * [Example configuration](#example-configuration)
+  * [Actions](#actions)
+    * [Debouncing](#debouncing)
+  * [Trigger chain](#trigger-chain)
+    * [Conditions](#conditions)
+      * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
+        * [Trigger on change](#trigger-on-change)
+      * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
+      * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
+      * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
+  * [Sources](#sources)
+    * [Digital Mixing Consoles](#digital-mixing-consoles)
+    * [Dummy console](#dummy-console)
+    * [OBS bridges](#obs-bridges)
+    * [HTTP bridges](#http-bridges)
+    * [Tickers](#tickers)
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -305,9 +312,6 @@ It can check based on address, address regexp and also based on arguments.
 
 Here is an example:
 
-<details>
-<summary>Click to see YAML</summary>
-
 ```yaml
 actions:
   change_to_pulpit:
@@ -323,8 +327,6 @@ actions:
     # ...
 ```
 
-</details>
-
 This is a single condition on an action's trigger_chain.
 This checks for a message with an exact address of  "/ch/01/mix/on" and with a single first argument, that is int32 and
 the value is 1.
@@ -339,12 +341,161 @@ Parameters:
 | address_match_type | `eq`           | `eq`, `regexp`  | Determines the way of address matching.                                       | `regexp`                         |
 | trigger_on_change  | `true`         | `true`, `false` | See the [trigger on change](#trigger-on-change) paragraph.                    | `true`                           |
 | arguments          | none, optional |                 | See the next table.                                                           | List of arguments                |
-|
 
 Arguments:
 
+| Parameter        | Default value  | Possible values                  | Description                                                                     | Example values |
+|------------------|----------------|----------------------------------|---------------------------------------------------------------------------------|----------------|
+| index            | none, required | `0`                              | The 0 based index for the argument.                                             | `0`, `1`, `2`  |
+| type             | none, required | `string`, `int32`, `float32`     | The type of the argument.                                                       | `string`       |
+| value            | none, required |                                  | The value of the argument.                                                      | `1`            |
+| value_match_type | `=`            | `regexp`, `<=`,`<`,`>`,`>=`,`!=` | The comparison method. In case of regexp, the value can be a regexp expression. | `=`            |
 
 ##### Trigger on change
+
+The `trigger_on_change` option is a special one. Whenever a new message arrives that changes the store, every trigger_chain is checked.
+
+Now, during the execution of the trigger_chain, it is being monitored what messages those conditions accessed.
+By default (when `trigger_on_change: true`) if the trigger chain did not access the NEWLY UPDATED message, so the one that just arrived,
+the tasks aren't going to be executed. This avoids unneccessary re-execution just because an unrelevant message updated the store.
+
+But this is also usable, to avoid re-execution in a case when a relevant message updated the store.
+
+Practically this option decouples a condition from being a trigger. The condition is still required to match in order to execute the tasks, but that single condition's change will not trigger execution.
+
+You want to set this to false, when you don't want to re-execute the action upon the toggling of one of the parameters your trigger_chain is watching for. This is an edge case, that comes handy sometimes.
+
+For example, let's say you have the following trigger_chain (in pseudo-ish code):
+```
+IF ( OBS-scene-name-contains-foobar AND
+     OR (ch1-unmuted OR ch2-unmuted OR stage-is-muted) 
+    )
+THEN
+...
+```
+
+So you want to only execute the tasks, when certain things on the console match, but don't wanna re-execute just because of an OBS scene change.
+But you only want to execute the tasks, when certain things on the console match AND obs scene name contains foobar.
+
+Then you can mark the OBS-scene-name-contains condition with `trigger_on_change: false`.
+That will cause the tasks to be executed when the console state changes (and obs scene contains foobar), but will not trigger if only obs changes would otherwise match.
+E.g. you might switch from one scene to another that contains foobar in our pseudo example, but that would not re-execute the tasks.
+
+#### AND: Require all children condition to resolve to true
+
+`And` as it's name implies requires all children to resolve to true.
+
+The following example action requires both ch1 **AND** ch2 to be on.
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+      type: and
+      children:
+        - type: osc_match
+          parameters:
+            address: /ch/01/mix/on
+            arguments:
+              - index: 0
+                type: "int32"
+                value: "1"
+        - type: osc_match
+          parameters:
+            address: /ch/02/mix/on
+            arguments:
+              - index: 0
+                type: "int32"
+                value: "1"
+  tasks:
+    # ...
+```
+
+Now you see how conditions can be nested.
+
+#### OR: Require at least one children to resolve to true
+
+`Or` as it's name implies requires that at least one of the childrens would resolve to true.
+
+The following example action executes the tasks if ch1 **OR** ch2 is be on.
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+      type: or
+      children:
+        - type: osc_match
+          parameters:
+            address: /ch/01/mix/on
+            arguments:
+              - index: 0
+                type: "int32"
+                value: "1"
+        - type: osc_match
+          parameters:
+            address: /ch/02/mix/on
+            arguments:
+              - index: 0
+                type: "int32"
+                value: "1"
+  tasks:
+    # ...
+```
+
+#### NOT: Negate the single child's result.
+
+The `NOT` condition simply negates it's single child's result.
+
+Here is how you would achieve this pseudo code:
+
+```
+AND(ch1-unmuted; NOT(OR(ch10-unmuted,ch20-unmuted)))
+```
+
+In yaml:
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+      type: and
+      children:
+        - type: osc_match
+          parameters:
+            address: /ch/01/mix/on
+            arguments:
+              - index: 0
+                type: "int32"
+                value: "1"
+        - type: not
+          children:
+            - type: or
+              children:
+                - type: osc_match
+                  parameters:
+                    address: /ch/10/mix/on
+                    arguments:
+                      - index: 0
+                        type: "int32"
+                        value: "1"
+                - type: osc_match
+                  parameters:
+                    address: /ch/20/mix/on
+                    arguments:
+                      - index: 0
+                        type: "int32"
+                        value: "1"
+                        
+  tasks:
+    # ...
+```
+
+
+
+
+
+
 
 ## Sources
 

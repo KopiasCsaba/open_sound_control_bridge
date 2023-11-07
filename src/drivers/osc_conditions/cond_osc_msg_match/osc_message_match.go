@@ -149,7 +149,7 @@ func (a *OSCCondition) setArgumentParameters(m interface{}) error {
 		{
 			Name:         ArgTypeKey,
 			Optional:     false,
-			ValuePattern: "^string|int|float$",
+			ValuePattern: "^string|int|float$", // @TODO this doesn't work... int32 is accepted.
 			Type:         []string{"string"},
 		},
 		{
