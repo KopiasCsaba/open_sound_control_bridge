@@ -2,18 +2,20 @@
 
 
 <!-- TOC -->
+
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-  * [Example uses](#example-uses)
+    * [Example uses](#example-uses)
 * [Install](#install)
 * [Overview](#overview)
 * [Configuration](#configuration)
-  * [Example configuration](#example-configuration)
-  * [Sources](#sources)
-    * [Digital Mixing Consoles](#digital-mixing-consoles)
-    * [Dummy console](#dummy-console)
-    * [OBS bridges](#obs-bridges)
-    * [HTTP bridges](#http-bridges)
-    * [Tickers](#tickers)
+    * [Example configuration](#example-configuration)
+    * [Sources](#sources)
+        * [Digital Mixing Consoles](#digital-mixing-consoles)
+        * [Dummy console](#dummy-console)
+        * [OBS bridges](#obs-bridges)
+        * [HTTP bridges](#http-bridges)
+        * [Tickers](#tickers)
+
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -214,6 +216,135 @@ You can see the results on this gif:
 OBS is switching scenes based on the mute status, and at the bottom you can see the arriving requests.
 
 You can just switch from the dummy to the console one, and your mute button is then tied to OBS scenes and the camera.
+
+## Actions
+
+Actions encapsulate a so called `trigger_chain` and a list of `tasks` together.
+
+This is how actions look like:
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+    # ... tree of conditions
+    tasks:
+    # ... 1 dimensional list of tasks to be executed in order, serially
+
+  change_to_stage:
+    trigger_chain:
+    # ... tree of conditions
+    tasks:
+    # ... 1 dimensional list of tasks to be executed in order, serially
+
+  start_live_stream:
+    trigger_chain:
+    # ... tree of conditions
+    tasks:
+    # ... 1 dimensional list of tasks to be executed in order, serially
+```
+
+Each action has it's own name, that is shown in the logs upon evaluation/execution.
+
+Whenever the internal store receives an update, OSCBridge checks each action's trigger_chain, the tree of conditions if
+they match the store or not.
+If the trigger_chain is evaluated to be true, then the tasks will be executed.
+
+### Debouncing
+
+There is an option, that can be specified for each action, called `debounce_millis`,
+if provided then the logic changes a bit. Upon store change, if the trigger_chain resolves to true,
+then after the specified ammount of milliseconds the trigger_chain is re-evaluated.
+If it is still true, only then will the tasks be executed.
+
+For example:
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+    # ... tree of conditions
+    tasks:
+    # ... 1 dimensional list of tasks to be executed in order, serially
+    debounce_millis: 500
+```
+
+This could protect against quick transients, e.g. an accidental unmute/mute. For example here,
+if the trigger chain is watching for ch1's unmute, then it will only execute the tasks if it is unmute for more than
+0.5seconds.
+This can help avoid accidents, where you accidentally unmute something but then you immediately mute it back.
+
+## Trigger chain
+
+The trigger chain is a tree of conditions. Some conditions can be nested, some of them are just leafs on a tree, without
+any children.
+
+You can build very complex conditions into here, e.g. (in pseudo code):
+
+```
+IF
+(mic1-is-muted AND mic2-is-unmuted) OR 
+(ch10-is-unmuted AND 
+    (
+    ch11fader > 0.5 OR 
+    ch12fader > 0.5
+    )
+) THEN
+...
+
+```
+
+But the way to express these are a bit more complicated due to the YAML configuration we use.
+
+### Conditions
+
+#### OSC_MATCH: Check if a single message exists
+
+The `osc_match` condition can nothave any children, and it is checking for a single message in the store.
+It can check based on address, address regexp and also based on arguments.
+
+Here is an example:
+
+<details>
+<summary>Click to see YAML</summary>
+
+```yaml
+actions:
+  change_to_pulpit:
+    trigger_chain:
+      - type: osc_match
+        parameters:
+          address: /ch/01/mix/on
+          arguments:
+            - index: 0
+              type: "int32"
+              value: "1"
+    tasks:
+    # ...
+```
+
+</details>
+
+This is a single condition on an action's trigger_chain.
+This checks for a message with an exact address of  "/ch/01/mix/on" and with a single first argument, that is int32 and
+the value is 1.
+
+If such a message exists in the store, the tasks will be executed.
+
+Parameters:
+
+| Parameter          | Default value  | Possible values | Description                                                                   | Example values                   |
+|--------------------|----------------|-----------------|-------------------------------------------------------------------------------|----------------------------------|
+| address            | none, required |                 | The value for matching a message's address. Can be a regexp, see next option. | /ch/01/mix/on, /ch/0[0-9]/mix/on |
+| address_match_type | `eq`           | `eq`, `regexp`  | Determines the way of address matching.                                       | `regexp`                         |
+| trigger_on_change  | `true`         | `true`, `false` | See the [trigger on change](#trigger-on-change) paragraph.                    | `true`                           |
+| arguments          | none, optional |                 | See the next table.                                                           | List of arguments                |
+|
+
+Arguments:
+
+
+##### Trigger on change
 
 ## Sources
 
@@ -485,6 +616,8 @@ osc_sources:
 ```
 
 </details>
+
+
 
 
 The documentation will be continued.
