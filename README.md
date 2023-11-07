@@ -2,29 +2,31 @@
 
 
 <!-- TOC -->
-
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-    * [Example uses](#example-uses)
+  * [Example uses](#example-uses)
 * [Install](#install)
 * [Overview](#overview)
 * [Configuration](#configuration)
-    * [Example configuration](#example-configuration)
-    * [Actions](#actions)
-        * [Debouncing](#debouncing)
-    * [Trigger chain](#trigger-chain)
-        * [Conditions](#conditions)
-            * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
-                * [Trigger on change](#trigger-on-change)
-            * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
-            * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
-            * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
-    * [Sources](#sources)
-        * [Digital Mixing Consoles](#digital-mixing-consoles)
-        * [Dummy console](#dummy-console)
-        * [OBS bridges](#obs-bridges)
-        * [HTTP bridges](#http-bridges)
-        * [Tickers](#tickers)
-
+  * [Example configuration](#example-configuration)
+  * [Actions](#actions)
+    * [Debouncing](#debouncing)
+  * [Trigger chain](#trigger-chain)
+    * [Conditions](#conditions)
+      * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
+        * [Trigger on change](#trigger-on-change)
+      * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
+      * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
+      * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
+  * [Sources](#sources)
+    * [Digital Mixing Consoles](#digital-mixing-consoles)
+    * [Dummy console](#dummy-console)
+    * [OBS bridges](#obs-bridges)
+    * [HTTP bridges](#http-bridges)
+    * [Tickers](#tickers)
+  * [Tasks](#tasks)
+    * [HTTP request](#http-request)
+* [OBS Scene change](#obs-scene-change)
+* [OBS Vendor message](#obs-vendor-message)
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -790,12 +792,12 @@ The `http_request` task executes a specific http request upon evaluation.
 
 Parameters:
 
-| Parameter    | Default value  | Possible values | Description                   | Example values                                         |
-|--------------|----------------|-----------------|-------------------------------|--------------------------------------------------------|
-| url          | none, required |                 | The URL for the request.      | http://127.0.0.1/?foo=bar                              |
-| body         | empty string   |                 | The request body.             | {"json":"or something else"}                           |
-| timeout_secs | 30             |                 | The timeout for the request.  | 1                                                      |
-| method       | `GET`          | `GET`, `POST`   | The method for the request.   | `POST`                                                 |
+| Parameter    | Default value  | Possible values | Description                   | Example values                                           |
+|--------------|----------------|-----------------|-------------------------------|----------------------------------------------------------|
+| url          | none, required |                 | The URL for the request.      | http://127.0.0.1/?foo=bar                                |
+| body         | empty string   |                 | The request body.             | {"json":"or something else"}                             |
+| timeout_secs | 30             |                 | The timeout for the request.  | 1                                                        |
+| method       | `GET`          | `GET`, `POST`   | The method for the request.   | `POST`                                                   |
 | headers      | empty          |                 | A list of "Key: value" pairs. | <pre>- "Content-Type: text/json"<br>- "X-Foo: bar"</pre> |
 
 Example:
@@ -804,7 +806,7 @@ Example:
 actions:
   to_pulpit:
     trigger_chain:
-      # ...
+    # ...
     tasks:
       - type: http_request
         parameters:
@@ -830,4 +832,51 @@ Accept-Encoding: gzip
 
 O HAI
 ```
+
+# OBS Scene change
+
+The `obs_scene_change` task changes the live or program scene on a remote OBS instance.
+
+Parameters:
+
+| Parameter        | Default value  | Possible values      | Description                                               | Example values    |
+|------------------|----------------|----------------------|-----------------------------------------------------------|-------------------|
+| scene            | none, required |                      | The name of the scene to which we need to switch.         | `PULPIT`, `STAGE` |
+| connection       | none, required |                      | The name of the obs connection that this task should use. | `streampc_obs`    |
+| scene_match_type | `exact`        | `exact`, `regexp`    | How to match the scene name.                              | `regexp`          |
+| target           | none, required | `program`, `preview` | Which side of OBS should be switched.                     | `program`         |
+
+Example:
+
+```yaml
+obs_connections:
+  - name: "streampc_obs"
+    host: 192.168.1.75
+    port: 4455
+    password: "foobar12345"
+    
+    
+actions:
+  to_pulpit:
+    trigger_chain:
+    # ...
+    tasks:
+      - type: obs_scene_change
+        parameters:
+          scene: "PULPIT.*"
+          scene_match_type: regexp
+          target: "program"
+          connection: "streaming_pc_obs"
+          
+      - type: obs_scene_change
+        parameters:
+          scene: "STAGE"
+          scene_match_type: exact
+          target: "preview"
+          connection: "streaming_pc_obs"
+```
+
+# OBS Vendor message
+
+
 
