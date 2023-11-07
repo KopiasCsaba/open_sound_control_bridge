@@ -2,27 +2,29 @@
 
 
 <!-- TOC -->
+
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-  * [Example uses](#example-uses)
+    * [Example uses](#example-uses)
 * [Install](#install)
 * [Overview](#overview)
 * [Configuration](#configuration)
-  * [Example configuration](#example-configuration)
-  * [Actions](#actions)
-    * [Debouncing](#debouncing)
-  * [Trigger chain](#trigger-chain)
-    * [Conditions](#conditions)
-      * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
-        * [Trigger on change](#trigger-on-change)
-      * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
-      * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
-      * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
-  * [Sources](#sources)
-    * [Digital Mixing Consoles](#digital-mixing-consoles)
-    * [Dummy console](#dummy-console)
-    * [OBS bridges](#obs-bridges)
-    * [HTTP bridges](#http-bridges)
-    * [Tickers](#tickers)
+    * [Example configuration](#example-configuration)
+    * [Actions](#actions)
+        * [Debouncing](#debouncing)
+    * [Trigger chain](#trigger-chain)
+        * [Conditions](#conditions)
+            * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
+                * [Trigger on change](#trigger-on-change)
+            * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
+            * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
+            * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
+    * [Sources](#sources)
+        * [Digital Mixing Consoles](#digital-mixing-consoles)
+        * [Dummy console](#dummy-console)
+        * [OBS bridges](#obs-bridges)
+        * [HTTP bridges](#http-bridges)
+        * [Tickers](#tickers)
+
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -353,19 +355,25 @@ Arguments:
 
 ##### Trigger on change
 
-The `trigger_on_change` option is a special one. Whenever a new message arrives that changes the store, every trigger_chain is checked.
+The `trigger_on_change` option is a special one. Whenever a new message arrives that changes the store, every
+trigger_chain is checked.
 
 Now, during the execution of the trigger_chain, it is being monitored what messages those conditions accessed.
-By default (when `trigger_on_change: true`) if the trigger chain did not access the NEWLY UPDATED message, so the one that just arrived,
-the tasks aren't going to be executed. This avoids unneccessary re-execution just because an unrelevant message updated the store.
+By default (when `trigger_on_change: true`) if the trigger chain did not access the NEWLY UPDATED message, so the one
+that just arrived,
+the tasks aren't going to be executed. This avoids unneccessary re-execution just because an unrelevant message updated
+the store.
 
 But this is also usable, to avoid re-execution in a case when a relevant message updated the store.
 
-Practically this option decouples a condition from being a trigger. The condition is still required to match in order to execute the tasks, but that single condition's change will not trigger execution.
+Practically this option decouples a condition from being a trigger. The condition is still required to match in order to
+execute the tasks, but that single condition's change will not trigger execution.
 
-You want to set this to false, when you don't want to re-execute the action upon the toggling of one of the parameters your trigger_chain is watching for. This is an edge case, that comes handy sometimes.
+You want to set this to false, when you don't want to re-execute the action upon the toggling of one of the parameters
+your trigger_chain is watching for. This is an edge case, that comes handy sometimes.
 
 For example, let's say you have the following trigger_chain (in pseudo-ish code):
+
 ```
 IF ( OBS-scene-name-contains-foobar AND
      OR (ch1-unmuted OR ch2-unmuted OR stage-is-muted) 
@@ -374,12 +382,15 @@ THEN
 ...
 ```
 
-So you want to only execute the tasks, when certain things on the console match, but don't wanna re-execute just because of an OBS scene change.
+So you want to only execute the tasks, when certain things on the console match, but don't wanna re-execute just because
+of an OBS scene change.
 But you only want to execute the tasks, when certain things on the console match AND obs scene name contains foobar.
 
 Then you can mark the OBS-scene-name-contains condition with `trigger_on_change: false`.
-That will cause the tasks to be executed when the console state changes (and obs scene contains foobar), but will not trigger if only obs changes would otherwise match.
-E.g. you might switch from one scene to another that contains foobar in our pseudo example, but that would not re-execute the tasks.
+That will cause the tasks to be executed when the console state changes (and obs scene contains foobar), but will not
+trigger if only obs changes would otherwise match.
+E.g. you might switch from one scene to another that contains foobar in our pseudo example, but that would not
+re-execute the tasks.
 
 #### AND: Require all children condition to resolve to true
 
@@ -408,7 +419,7 @@ actions:
                 type: "int32"
                 value: "1"
   tasks:
-    # ...
+  # ...
 ```
 
 Now you see how conditions can be nested.
@@ -440,7 +451,7 @@ actions:
                 type: "int32"
                 value: "1"
   tasks:
-    # ...
+  # ...
 ```
 
 #### NOT: Negate the single child's result.
@@ -486,14 +497,15 @@ actions:
                       - index: 0
                         type: "int32"
                         value: "1"
-                        
+
   tasks:
-    # ...
+  # ...
 ```
 
 ## Sources
 
-Now that you know how to compose conditions, you need input sources, that would add messages to the internal store, against which you can match your trigger chains.
+Now that you know how to compose conditions, you need input sources, that would add messages to the internal store,
+against which you can match your trigger chains.
 
 ### Digital Mixing Consoles
 
@@ -720,27 +732,30 @@ You may see the full reference [here](https://cs.opensource.google/go/go/+/refs/
 
 Currently these messages are being emitted in every iteration:
 
-* /time/2006
-* /time/06
-* /time/Jan
-* /time/January
-* /time/01
-* /time/1
-* /time/Mon
-* /time/Monday
-* /time/2
-* /time/_2
-* /time/02
-* /time/__2
-* /time/002
-* /time/15
-* /time/3
-* /time/03
-* /time/4
-* /time/04
-* /time/5
-* /time/05
-* /time/PM
+```
+Message(address: /time/rfc3339,         arguments: [Argument(string:2023-11-07T08:53:06Z)])
+Message(address: /time/parts/2006,      arguments: [Argument(string:2023)])
+Message(address: /time/parts/06,        arguments: [Argument(string:23)])
+Message(address: /time/parts/Jan,       arguments: [Argument(string:Nov)])
+Message(address: /time/parts/January,   arguments: [Argument(string:November)])
+Message(address: /time/parts/01,        arguments: [Argument(string:11)])
+Message(address: /time/parts/1,         arguments: [Argument(string:11)])
+Message(address: /time/parts/Mon,       arguments: [Argument(string:Tue)])
+Message(address: /time/parts/Monday,    arguments: [Argument(string:Tuesday)])
+Message(address: /time/parts/2,         arguments: [Argument(string:7)])
+Message(address: /time/parts/_2,        arguments: [Argument(string: 7)])
+Message(address: /time/parts/02,        arguments: [Argument(string:07)])
+Message(address: /time/parts/__2,       arguments: [Argument(string:311)])
+Message(address: /time/parts/002,       arguments: [Argument(string:311)])
+Message(address: /time/parts/15,        arguments: [Argument(string:08)])
+Message(address: /time/parts/3,         arguments: [Argument(string:8)])
+Message(address: /time/parts/03,        arguments: [Argument(string:08)])
+Message(address: /time/parts/4,         arguments: [Argument(string:53)])
+Message(address: /time/parts/04,        arguments: [Argument(string:53)])
+Message(address: /time/parts/5,         arguments: [Argument(string:6)])
+Message(address: /time/parts/05,        arguments: [Argument(string:06)])
+Message(address: /time/parts/PM,        arguments: [Argument(string:AM)])
+```
 
 So if you want to match for hour:minute, then you want to match the values of /time/15 and /time/04 respectively in the
 trigger chain (to be explained later).
@@ -764,7 +779,55 @@ osc_sources:
 
 </details>
 
+## Tasks
 
+Now you have actions, trigger_chains and sources, the final piece is to have tasks that will be executed if the
+trigger_chain evaluates to true.
 
+### HTTP request
 
-The documentation will be continued.
+The `http_request` task executes a specific http request upon evaluation.
+
+Parameters:
+
+| Parameter    | Default value  | Possible values | Description                   | Example values                                         |
+|--------------|----------------|-----------------|-------------------------------|--------------------------------------------------------|
+| url          | none, required |                 | The URL for the request.      | http://127.0.0.1/?foo=bar                              |
+| body         | empty string   |                 | The request body.             | {"json":"or something else"}                           |
+| timeout_secs | 30             |                 | The timeout for the request.  | 1                                                      |
+| method       | `GET`          | `GET`, `POST`   | The method for the request.   | `POST`                                                 |
+| headers      | empty          |                 | A list of "Key: value" pairs. | <pre>- "Content-Type: text/json"<br>- "X-Foo: bar"</pre> |
+
+Example:
+
+```yaml
+actions:
+  to_pulpit:
+    trigger_chain:
+      # ...
+    tasks:
+      - type: http_request
+        parameters:
+          url: "http://127.0.0.1:8888/cgi-bin/ptzctrl.cgi?ptzcmd&poscall&0&__TURN_TO_PULPIT"
+          method: "get"
+          timeout_secs: 1
+          headers:
+            - "X-Foo: bar"
+            - "X-Foo2: baz"
+          body: "O HAI"
+```
+
+The request that will be made:
+
+```
+GET /cgi-bin/ptzctrl.cgi?ptzcmd&poscall&0&__TURN_TO_PULPIT HTTP/1.1
+Host: 127.0.0.1:8888
+User-Agent: Go-http-client/1.1
+Content-Length: 5
+X-Foo: bar
+X-Foo2: baz
+Accept-Encoding: gzip
+
+O HAI
+```
+
