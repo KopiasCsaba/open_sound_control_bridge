@@ -25,8 +25,11 @@
     * [Tickers](#tickers)
   * [Tasks](#tasks)
     * [HTTP request](#http-request)
-* [OBS Scene change](#obs-scene-change)
-* [OBS Vendor message](#obs-vendor-message)
+    * [OBS Scene change](#obs-scene-change)
+    * [OBS Vendor message](#obs-vendor-message)
+    * [Delay](#delay)
+    * [Run command](#run-command)
+    * [Send OSC message](#send-osc-message)
 <!-- TOC -->
 
 # Open Sound Control Bridge
@@ -833,7 +836,7 @@ Accept-Encoding: gzip
 O HAI
 ```
 
-# OBS Scene change
+### OBS Scene change
 
 The `obs_scene_change` task changes the live or program scene on a remote OBS instance.
 
@@ -876,7 +879,11 @@ actions:
           connection: "streaming_pc_obs"
 ```
 
-# OBS Vendor message
+### OBS Vendor message
+### Delay
+### Run command
+### Send OSC message
+
 
 
 
