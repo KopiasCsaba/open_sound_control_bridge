@@ -491,13 +491,9 @@ actions:
     # ...
 ```
 
-
-
-
-
-
-
 ## Sources
+
+Now that you know how to compose conditions, you need input sources, that would add messages to the internal store, against which you can match your trigger chains.
 
 ### Digital Mixing Consoles
 
