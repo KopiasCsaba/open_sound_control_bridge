@@ -19,29 +19,9 @@ SHELL := /bin/bash
 help: ## Display this help screen
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
-#.PHONY: build
-#build: _setup_buildx  ## Builds the production binaries, and exits
-#	@docker compose -f docker/docker-compose.yml build app-prod-builder
-#	@rm build/app-prod.image.tar.gz > /dev/null 2>&1 || true
-#	@docker save app-prod | gzip > build/app-prod.image.tar.gz
-#	@echo ""
-#	@echo "Exported build/app-prod.image.tar.gz"
-#	@ls -lha build/app-prod.image.tar.gz
-
 .PHONY: build
-build: _setup_buildx  ## Builds the production binaries, and exits
-	@docker/build.sh
-	@cp /tmp/codebase/build/app-linux-amd64.bin /data/home/csaba/cprojects/audio/ccp_audio_system_manual/setup/streampc/docker/console-obs-bridge/oscbridge;
-	@cp src/config.yml /data/home/csaba/cprojects/audio/ccp_audio_system_manual/setup/streampc/docker/console-obs-bridge/config/ccp-oscbridge.yml
-
-
-
-.PHONY: build_debug
-build_debug:  _setup_buildx ## Executes a shell in the build container, you can manually execute the build script and tweak/debug.
-	@echo "To start the building, execute /mnt/docker/build.sh"
-	@docker container rm app-builder || true
-	@docker compose -f docker/docker-compose.yml run -u root --entrypoint "/bin/bash -l" app-prod-builder
-
+build: _setup_buildx _dev_init  ## Builds the production binaries, and exits
+	@docker compose -f docker/docker-compose.yml run  --entrypoint "bash -l /mnt/docker/build.sh" app-dev
 
 .PHONY: dev_start
 dev_start: _setup_buildx _dev_init ## Starts the development environment.
@@ -60,17 +40,12 @@ dev_start_debug:  _setup_buildx  _dev_init ## Starts the development container w
 dev_shell:  ## Attaches a shell to the running development environment. (make dev_start needed for it)
 	@docker compose  -f docker/docker-compose.yml exec app-dev bash -l
 
-.PHONY: dev_generate
-dev_generate:  ## Updates/generates code
-	@docker compose  -f docker/docker-compose.yml exec app-dev bash -l "/mnt/src/adapters/pgrepos/orm/generate.sh"
-
 .PHONY: dev_root_shell
 dev_root_shell:  ## Attaches a root shell to the running development environment. (make dev_start needed for it)
 	@docker compose  -f docker/docker-compose.yml exec -u root app-dev bash -l
 
 .PHONY: lint
 lint: _lint_prep _lint_exec  ## Executes the linter in the dev env
-
 
 .PHONY: _lint_prep
 _lint_prep: _setup_buildx _dev_init

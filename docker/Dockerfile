@@ -42,13 +42,6 @@ RUN echo 'export PATH="${PATH}:/usr/local/go/bin"' >> /etc/profile
 WORKDIR /mnt
 
 
-# =========================================================================================================
-FROM buildbase as build
-
-
-ENTRYPOINT ["/bin/bash","-l","-c", "./docker/build.sh;"]
-
-
 
 # =========================================================================================================
 FROM buildbase AS development
