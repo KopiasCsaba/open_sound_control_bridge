@@ -25,7 +25,7 @@ while true; do
 
   echo "> Starting app..."
   # shellcheck disable=SC2086
-  go run -ldflags "-s -w -X main.Revision='development' -X main.BuildTime=$(date +'%Y-%m-%d_%T')" cmd/main/main.go &
+  go run -ldflags "-s -w -X main.Revision='devel' -X main.BuildTime=$(date +'%Y-%m-%d_%T')" cmd/main/main.go &
 
   # Store PID
   PID=$!

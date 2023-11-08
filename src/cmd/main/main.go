@@ -38,7 +38,10 @@ import (
 	"net.kopias.oscbridge/app/usecase/usecaseifs"
 )
 
+const Version = "v1.0.0"
+
 var (
+
 	// Revision is the git revision of the current executable, filled in with the build command.
 	Revision string
 	// BuildTime is the time of build of the current executable, filled in with the build command.
@@ -51,7 +54,7 @@ func main() {
 
 		log := logger.New()
 		log.Infof(ctx, "OPEN SOUND CONTROL BRIDGE is starting.")
-		log.Infof(ctx, "Build time: %s Revision: %s", BuildTime, Revision)
+		log.Infof(ctx, "Version: %s Revision: %.8s Built at: %s", Version, Revision, BuildTime)
 
 		err := startApp(ctx, log)
 		if err != nil {

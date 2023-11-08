@@ -10,6 +10,9 @@ export GOPATH=""
 echo -e "Downloading dependencies...\n"
 go mod download
 
+git config --global --add safe.directory /mnt
+
+REVISION=$(git rev-parse HEAD 2>/dev/null || echo 1)
 # build_application($1,$2,$3) executes go build with all the required parameters.
 # $1: The selected go operating system
 # $2: The selected go architecture
@@ -25,8 +28,8 @@ build_application() {
   rm "$BUILD_DIR/app-$GOOS-$GOARCH.bin" >/dev/null 2>&1
 
   go build -tags netgo \
-    -ldflags "-s -w -X main.Revision=$(git rev-parse HEAD 2>/dev/null || echo 1) -X main.BuildTime=$(date +'%Y-%m-%d_%T') " \
-    -o "$BUILD_DIR/app-$GOOS-$GOARCH.$EXTENSION" \
+    -ldflags "-s -w -X main.Revision=$REVISION -X main.BuildTime=$(date +'%Y-%m-%d_%T') " \
+    -o "$BUILD_DIR/oscbridge-${REVISION:0:8}-$GOOS-$GOARCH.$EXTENSION" \
     cmd/main/main.go
 
 
