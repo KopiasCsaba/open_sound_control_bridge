@@ -32,6 +32,7 @@
     * [Delay](#delay)
     * [Run command](#run-command)
     * [Send OSC message](#send-osc-message)
+* [Development](#development)
 <!-- TOC -->
 
 # Under construction
@@ -1035,4 +1036,11 @@ actions:
               value: 1
 ```
 
+# Development
 
+You'll need "make" and "docker" installed.
+After cloning the repository, run "make" to see the available commands. 
+
+Run `make dev_start` to start the development environment. 
+
+It'll look for a config.yml in the source root.
