@@ -2,36 +2,36 @@
 
 
 <!-- TOC -->
-
+* [Under construction](#under-construction)
 * [Open Sound Control Bridge](#open-sound-control-bridge)
-    * [Example uses](#example-uses)
+  * [Example uses](#example-uses)
 * [Install](#install)
+  * [Docker](#docker)
 * [Overview](#overview)
 * [Configuration](#configuration)
-    * [Example configuration](#example-configuration)
-    * [Actions](#actions)
-        * [Debouncing](#debouncing)
-    * [Trigger chain](#trigger-chain)
-        * [Conditions](#conditions)
-            * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
-                * [Trigger on change](#trigger-on-change)
-            * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
-            * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
-            * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
-    * [Sources](#sources)
-        * [Digital Mixing Consoles](#digital-mixing-consoles)
-        * [Dummy console](#dummy-console)
-        * [OBS bridges](#obs-bridges)
-        * [HTTP bridges](#http-bridges)
-        * [Tickers](#tickers)
-    * [Tasks](#tasks)
-        * [HTTP request](#http-request)
-        * [OBS Scene change](#obs-scene-change)
-        * [OBS Vendor message](#obs-vendor-message)
-        * [Delay](#delay)
-        * [Run command](#run-command)
-        * [Send OSC message](#send-osc-message)
-
+  * [Example configuration](#example-configuration)
+  * [Actions](#actions)
+    * [Debouncing](#debouncing)
+  * [Trigger chain](#trigger-chain)
+    * [Conditions](#conditions)
+      * [OSC_MATCH: Check if a single message exists](#oscmatch-check-if-a-single-message-exists)
+        * [Trigger on change](#trigger-on-change)
+      * [AND: Require all children condition to resolve to true](#and-require-all-children-condition-to-resolve-to-true)
+      * [OR: Require at least one children to resolve to true](#or-require-at-least-one-children-to-resolve-to-true)
+      * [NOT: Negate the single child's result.](#not-negate-the-single-childs-result)
+  * [Sources](#sources)
+    * [Digital Mixing Consoles](#digital-mixing-consoles)
+    * [Dummy console](#dummy-console)
+    * [OBS bridges](#obs-bridges)
+    * [HTTP bridges](#http-bridges)
+    * [Tickers](#tickers)
+  * [Tasks](#tasks)
+    * [HTTP request](#http-request)
+    * [OBS Scene change](#obs-scene-change)
+    * [OBS Vendor message](#obs-vendor-message)
+    * [Delay](#delay)
+    * [Run command](#run-command)
+    * [Send OSC message](#send-osc-message)
 <!-- TOC -->
 
 # Under construction
@@ -83,8 +83,32 @@ Here is just a few idea:
 I think now you got the point!
 
 # Install
+ * Download the binary from the latest [release](https://github.com/KopiasCsaba/open_sound_control_bridge/releases)
+ * Create a [config.yml](https://github.com/KopiasCsaba/open_sound_control_bridge#example-configuration) next to the binary.
+ * Execute!
 
-This section is under construction.
+```bash
+$:oscbridge$ ls
+config.yml  oscbridge-6acaf3b4-linux-amd64.bin
+
+$:oscbridge$ chmod +x oscbridge-6acaf3b4-linux-amd64.bin 
+
+$:oscbridge$ ./oscbridge-6acaf3b4-linux-amd64.bin 
+2023-11-13 07:30:51 [ INFO] OPEN SOUND CONTROL BRIDGE is starting.
+2023-11-13 07:30:51 [ INFO] Version: v1.0.0 Revision: 6acaf3b4 
+2023-11-13 07:30:51 [ INFO] Initializing OBS connections...
+2023-11-13 07:30:51 [ INFO]     Connecting to streaming_pc_obs...
+2023-11-13 07:30:51 [ INFO] Initializing OBS bridges...
+2023-11-13 07:30:51 [ INFO] Initializing Open Sound Control (mixer consoles, etc) connections...
+
+...
+```
+
+You may override the config.yml location with the environment variable `APP_CONFIG_FILE`, e.g.: `APP_CONFIG_FILE=/a/b/c/d/osc.yml`.
+
+
+## Docker
+A docker-hub version will be coming soon when my time permits.
 
 # Overview
 
