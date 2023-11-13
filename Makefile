@@ -23,6 +23,11 @@ help: ## Display this help screen
 build: _setup_buildx _dev_init  ## Builds the production binaries, and exits
 	@docker compose -f docker/docker-compose.yml run  --entrypoint "bash -l /mnt/docker/build.sh" app-dev
 
+.PHONY: build_docker
+build_docker:
+	@docker build --build-context build=./build -t oscbrdige:latest - < ./docker/publish/Dockerfile
+
+
 .PHONY: dev_start
 dev_start: _setup_buildx _dev_init ## Starts the development environment.
 	# --no-cache
