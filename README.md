@@ -35,6 +35,7 @@
 <!-- TOC -->
 
 # Under construction
+
 I have just released this tool, and I still need to add a lot of documentation.
 Please bear with me during that!
 
@@ -952,8 +953,62 @@ actions:
 
 ### Run command
 
+The `run_command` task simply executes the given command.
+
+| Parameter         | Default value  | Description                                                                         | Example values                                          |
+|-------------------|----------------|-------------------------------------------------------------------------------------|---------------------------------------------------------|
+| command           | none, required | The path to the binary to execute.                                                  | /usr/bin/bash                                           |
+| arguments         | optional       | The list of arguments.                                                              | <pre>- "-l"<br>- "-c"<br>- "date > /tmp/date.txt"</pre> |
+| run_in_background | false          | Whether or not the serial execution of tasks should wait for the command to finish. |                                                         |
+| directory         | optional       | The execution folder for the command.                                               |                                                         |
+
+You need to [follow](https://pkg.go.dev/os/exec#example-Command) the classical way of specifying a binary and it's
+arguments.
+So you can not use `date > /tmp/date.txt` as the command, you need to specify `/usr/bin/bash` as the command, and then
+the parameters.
+
+Example:
+
+```yaml
+actions:
+  to_pulpit:
+    trigger_chain:
+    # ...
+    tasks:
+      - type: run_command
+        parameters:
+          command: "/usr/bin/bash"
+          arguments: [ "-l","-c","date > /tmp/date.txt" ]
+```
+
 ### Send OSC message
 
+The `send_osc_message` sends an open sound control message through the specified connection.
+Currently only the `console_bridges` support sending a message. E.g. you can send a message back to your console.
 
+| Parameter  | Default value  | Description                                                               | Example values                         |
+|------------|----------------|---------------------------------------------------------------------------|----------------------------------------|
+| connection | none, required | The OSC connection to use (the `name` from one of your `console_bridges`) | `behringer_x32`                        |
+| address    | none, required | The address of the message.                                               | `/ch/10/mix/on`                        |
+| arguments  | optional       | The arguments of the message.                                             | <pre>- type: int32<br>- value: 0</pre> |
+
+Example:
+
+(Unmute channel 10)
+
+```yaml
+actions:
+  to_pulpit:
+    trigger_chain:
+    # ...
+    tasks:
+      - type: send_osc_message
+        parameters:
+          connection: "behringer_x32"
+          address: "/ch/10/mix/on"
+          arguments:
+            - type: int32
+              value: 1
+```
 
 
