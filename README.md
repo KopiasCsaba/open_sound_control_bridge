@@ -2,7 +2,6 @@
 
 
 <!-- TOC -->
-* [Under construction](#under-construction)
 * [Open Sound Control Bridge](#open-sound-control-bridge)
   * [Example uses](#example-uses)
 * [Install](#install)
@@ -34,11 +33,6 @@
     * [Send OSC message](#send-osc-message)
 * [Development](#development)
 <!-- TOC -->
-
-# Under construction
-
-I have just released this tool, and I still need to add a lot of documentation.
-Please bear with me during that!
 
 # Open Sound Control Bridge
 
